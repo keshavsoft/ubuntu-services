@@ -1,6 +1,7 @@
 # ubuntu-services
 
 [![npm](https://img.shields.io/npm/v/ubuntu-services.svg)](https://www.npmjs.com/package/ubuntu-services)
+[![GitHub Pages](https://img.shields.io/badge/docs-GitHub_Pages-emerald)](https://keshavsoft.github.io/ubuntu-services/)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](LICENSE)
 [![KeshavSoft](https://img.shields.io/badge/org-KeshavSoft-purple)](https://github.com/keshavsoft)
 [![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-green.svg)](https://nodejs.org)
@@ -8,6 +9,13 @@
 
 > **Discover, list, and health-check all registered Ubuntu systemd services, verifying physical working directories on disk.**  
 > The OS service registry and health audit companion to `ubuntu-service-cli` and `ubuntu-service-port`.
+
+---
+
+## 🌐 Live Documentation & Terminal Simulator
+
+Interactive web portal, architecture guide, and live VPS simulator:  
+👉 **[https://keshavsoft.github.io/ubuntu-services/](https://keshavsoft.github.io/ubuntu-services/)**
 
 ---
 

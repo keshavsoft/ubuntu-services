@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ubuntu-services — OS Service Registry & Physical Folder Health Guardian</title>
+  <meta name="description" content="Discover, list, and health-check all registered Ubuntu systemd services, verifying physical working directories on disk to eliminate 200/CHDIR crash loops.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🩺</text></svg>">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    @keyframes pulse-subtle {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(1.02); }
+    }
+    .pulse-badge { animation: pulse-subtle 3s infinite ease-in-out; }
+  </style>
+</head>
+
+<body class="bg-zinc-950 text-zinc-100 antialiased min-h-screen flex flex-col font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
+
+  <!-- Navbar -->
+  <nav class="border-b border-zinc-800 bg-zinc-900/90 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+      
+      <!-- Brand -->
+      <a href="#" class="flex items-center gap-2.5 shrink-0 text-decoration-none">
+        <span class="w-7 h-7 rounded-lg bg-gradient-to-tr from-emerald-500 to-cyan-600 flex items-center justify-center text-zinc-950 font-black text-sm">🩺</span>
+        <span class="font-bold text-sm tracking-wider uppercase text-zinc-200">ubuntu-services</span>
+        <span class="text-[10px] font-semibold text-emerald-400 bg-emerald-950/80 border border-emerald-800/80 px-2 py-0.5 rounded-full">v1.0.0</span>
+      </a>
+
+      <!-- Nav Links -->
+      <div class="flex items-center gap-2 text-xs font-mono">
+        <a href="#the-story" class="text-zinc-400 hover:text-zinc-200 px-2.5 py-1 rounded hover:bg-zinc-800/80 transition hidden sm:inline-block">The Story</a>
+        <a href="#architecture" class="text-zinc-400 hover:text-zinc-200 px-2.5 py-1 rounded hover:bg-zinc-800/80 transition hidden sm:inline-block">Architecture</a>
+        <a href="#simulator" class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded hover:bg-emerald-500/30 transition flex items-center gap-1">
+          <i class="bi bi-play-fill"></i>
+          <span>Live Simulator</span>
+        </a>
+        <a href="https://keshavsoft.github.io/ubuntu-knowledge/" target="_blank" rel="noopener noreferrer"
+          class="text-zinc-400 hover:text-emerald-400 px-2 py-1 rounded hover:bg-zinc-800/80 transition hidden md:flex items-center gap-1" title="Ubuntu Knowledge Base">
+          <span>Ubuntu Hub</span>
+          <i class="bi bi-box-arrow-up-right text-[10px]"></i>
+        </a>
+        <a href="https://github.com/keshavsoft/ubuntu-services" target="_blank" rel="noopener noreferrer"
+          class="text-zinc-400 hover:text-zinc-100 p-1.5 transition" title="View Source on GitHub">
+          <i class="bi bi-github text-base"></i>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <main class="flex-1 max-w-5xl mx-auto px-4 sm:px-6 py-12 flex flex-col items-center text-center">
+
+    <!-- Status Badge -->
+    <div class="inline-flex items-center gap-2 bg-zinc-900 border border-emerald-800/60 text-emerald-400 px-3.5 py-1 rounded-full text-xs font-medium mb-6 shadow-sm pulse-badge">
+      <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+      <span>Physical Folder Guardian: <code class="font-mono text-zinc-200">npx ubuntu-services</code></span>
+    </div>
+
+    <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white max-w-3xl leading-tight mb-4">
+      The Health Guardian for <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-500">Ubuntu Systemd</span>
+    </h1>
+
+    <p class="text-base sm:text-lg text-zinc-400 max-w-2xl mb-8 leading-relaxed">
+      Caddy manages your domain routes. But if a project folder is renamed, deleted, or missing, Systemd fails silently in a <code class="text-amber-400">status=200/CHDIR</code> crash loop. <strong class="text-zinc-200">ubuntu-services</strong> audits every unit and verifies physical working directories on disk.
+    </p>
+
+    <!-- Quick Run Terminal Pill -->
+    <div class="w-full max-w-xl bg-zinc-900 border border-zinc-800 rounded-xl p-3 mb-8 flex items-center justify-between text-left font-mono text-xs text-zinc-300 shadow-xl">
+      <div class="flex items-center gap-2 overflow-x-auto">
+        <span class="text-emerald-400">$</span>
+        <span>npx ubuntu-services</span>
+        <span class="text-zinc-500"># audits all services & folders</span>
+      </div>
+      <button onclick="copySnippet('npx ubuntu-services', this)" class="hover:text-white text-zinc-400 transition ml-3 px-2 py-1 bg-zinc-800 rounded hover:bg-zinc-700 flex items-center gap-1" title="Copy command">
+        <i class="bi bi-clipboard"></i>
+        <span>Copy</span>
+      </button>
+    </div>
+
+    <!-- Quick Action Buttons -->
+    <div class="flex flex-wrap items-center justify-center gap-3 mb-14 text-xs font-mono">
+      <a href="#simulator" class="bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-bold px-4 py-2 rounded-lg transition shadow-lg shadow-emerald-600/20">
+        ⚡ Run Live Doctor Simulator
+      </a>
+      <a href="#the-story" class="bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 px-4 py-2 rounded-lg transition">
+        📖 Read Full Story
+      </a>
+      <a href="https://github.com/keshavsoft/ubuntu-service-port" target="_blank" class="bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 px-4 py-2 rounded-lg transition flex items-center gap-1">
+        <span>Reverse Lookup: ubuntu-service-port</span>
+        <i class="bi bi-box-arrow-up-right text-[10px] text-zinc-500"></i>
+      </a>
+    </div>
+
+    <!-- The Story Section -->
+    <section id="the-story" class="w-full text-left bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6 sm:p-8 mb-12 shadow-md">
+      <div class="flex items-center gap-2 text-emerald-400 font-semibold text-xs tracking-wider uppercase mb-3">
+        <i class="bi bi-journal-bookmark-fill"></i>
+        <span>The Problem & The Story</span>
+      </div>
+      <h2 class="text-2xl font-bold text-white mb-4">The Mystery of the Ghost Service & The 200/CHDIR Crash Loop</h2>
+      
+      <div class="space-y-4 text-sm text-zinc-300 leading-relaxed">
+        <p>
+          On a production Ubuntu VPS, you manage multiple micro-services. For example, <code class="text-emerald-300">appointment.keshavsoft.com</code> is reverse-proxied by Caddy to internal port <code class="text-cyan-300">3000</code>, and managed by a native systemd unit: <code class="text-zinc-200">/etc/systemd/system/appointment.keshavsoft.com.service</code>.
+        </p>
+        <p>
+          Everything runs smoothly — until one day, during development or maintenance, you <strong>rename the physical directory</strong>:  
+          from <code class="text-amber-300">/root/KeshavSoft/appointment-notifier</code> to <code class="text-amber-300">appointment-notifier-v1</code>.
+        </p>
+
+        <!-- The Catastrophe Box -->
+        <div class="bg-zinc-950/80 border-l-4 border-red-500 p-4 rounded-r-lg my-4">
+          <div class="font-bold text-red-400 mb-1 flex items-center gap-1.5">
+            <i class="bi bi-exclamation-triangle-fill text-red-500"></i>
+            <span>The Silent Cascade Failure (status=200/CHDIR)</span>
+          </div>
+          <p class="text-xs text-zinc-400 leading-relaxed">
+            1. The service file still exists in <code>/etc/systemd/system/</code>.<br>
+            2. Caddy still routes traffic from <code>appointment.keshavsoft.com</code> to <code>localhost:3000</code>.<br>
+            3. But when systemd tries to launch Node.js, it attempts to <code>cd</code> into <code>WorkingDirectory</code>. Because the folder was renamed, systemd fails with:
+            <br>
+            <code class="text-red-300 font-mono">Process: 2100 ExecStart=... (code=exited, status=200/CHDIR)</code><br>
+            4. Because of <code>Restart=on-failure</code>, systemd enters an infinite, silent restart loop.<br>
+            5. Nothing is listening on port 3000, and Caddy returns <strong>502 Bad Gateway</strong>!
+          </p>
+        </div>
+
+        <p>
+          <strong>Why Traditional Tools Fail Here:</strong> Standard inspection tools only read the unit text or live sockets. Because the folder was renamed, the <code>.env</code> file was unreadable, and no socket was listening. Port 3000 vanished into thin air!
+        </p>
+        <p>
+          <strong>The Solution:</strong> <code class="text-emerald-400 font-bold">ubuntu-services</code> is the physical folder auditor. It opens every systemd unit and tests whether <code class="text-cyan-300">fs.existsSync(WorkingDirectory)</code> is true. If the folder is missing, it immediately flags it as <code class="text-red-400">❌ MISSING FOLDER</code> and alerts you to the exact directory that broke!
+        </p>
+      </div>
+    </section>
+
+    <!-- Architecture Alignment Section -->
+    <section id="architecture" class="w-full text-left bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6 sm:p-8 mb-12 shadow-md">
+      <div class="flex items-center gap-2 text-emerald-400 font-semibold text-xs tracking-wider uppercase mb-3">
+        <i class="bi bi-diagram-3-fill"></i>
+        <span>Ecosystem Architecture</span>
+      </div>
+      <h2 class="text-2xl font-bold text-white mb-6">The KeshavSoft VPS Triumvirate</h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
+        
+        <!-- Step 1: caddy-cli -->
+        <div class="bg-zinc-950 border border-zinc-800 rounded-xl p-4 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-cyan-400 font-bold text-sm">1. Front Door</span>
+              <span class="bg-cyan-950 text-cyan-400 px-2 py-0.5 rounded text-[10px]">caddy-cli</span>
+            </div>
+            <p class="text-zinc-400 mb-3 font-sans">Receives public HTTPS traffic on port 443 and dials internal upstream ports.</p>
+          </div>
+          <div class="bg-zinc-900 p-2.5 rounded border border-zinc-800/80 text-[11px] text-zinc-300">
+            <code>appointment.keshavsoft.com &rarr; :3000</code>
+          </div>
+        </div>
+
+        <!-- Step 2: ubuntu-service-port -->
+        <div class="bg-zinc-950 border border-zinc-800 rounded-xl p-4 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-blue-400 font-bold text-sm">2. Port Lookup</span>
+              <span class="bg-blue-950 text-blue-400 px-2 py-0.5 rounded text-[10px]">ubuntu-service-port</span>
+            </div>
+            <p class="text-zinc-400 mb-3 font-sans">Reverse-lookup from port number to owning service unit, PID, and GitHub repo.</p>
+          </div>
+          <div class="bg-zinc-900 p-2.5 rounded border border-zinc-800/80 text-[11px] text-zinc-300">
+            <code>:3000 &rarr; PID 4123 &amp; Git Repo</code>
+          </div>
+        </div>
+
+        <!-- Step 3: ubuntu-services -->
+        <div class="bg-zinc-950 border border-emerald-500/40 rounded-xl p-4 flex flex-col justify-between shadow-lg shadow-emerald-950/20">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-emerald-400 font-bold text-sm">3. Folder Guardian</span>
+              <span class="bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded text-[10px]">ubuntu-services</span>
+            </div>
+            <p class="text-zinc-400 mb-3 font-sans">Verifies the physical working directory on disk to eliminate ghost services &amp; 200/CHDIR errors.</p>
+          </div>
+          <div class="bg-zinc-900 p-2.5 rounded border border-emerald-800/40 text-[11px] text-emerald-300 font-bold">
+            <code>WorkingDirectory &rarr; ✅ Disk Check</code>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Interactive Live Simulator Section -->
+    <section id="simulator" class="w-full text-left bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6 sm:p-8 mb-12 shadow-xl">
+      <div class="flex items-center justify-between gap-4 mb-4">
+        <div class="flex items-center gap-2 text-emerald-400 font-semibold text-xs tracking-wider uppercase">
+          <i class="bi bi-terminal-fill"></i>
+          <span>Live VPS Terminal Simulator</span>
+        </div>
+        <span class="text-[11px] font-mono text-zinc-500">Interactive Click to Test</span>
+      </div>
+
+      <p class="text-xs text-zinc-400 mb-6 font-sans">
+        Click any command button below to simulate running <code class="text-emerald-300 font-mono">ubuntu-services</code> directly on an Ubuntu production VPS:
+      </p>
+
+      <!-- Command Buttons -->
+      <div class="flex flex-wrap gap-2 mb-4 font-mono text-xs">
+        <button onclick="runSimulator('overview')" id="btn-overview" class="bg-emerald-600 text-zinc-950 font-bold px-3 py-1.5 rounded hover:bg-emerald-500 transition shadow">
+          npx ubuntu-services
+        </button>
+        <button onclick="runSimulator('broken')" id="btn-broken" class="bg-zinc-800 text-zinc-300 px-3 py-1.5 rounded hover:bg-zinc-700 transition border border-zinc-700">
+          npx ubuntu-services broken (doctor)
+        </button>
+        <button onclick="runSimulator('dirs')" id="btn-dirs" class="bg-zinc-800 text-zinc-300 px-3 py-1.5 rounded hover:bg-zinc-700 transition border border-zinc-700">
+          npx ubuntu-services dirs
+        </button>
+        <button onclick="runSimulator('inspect')" id="btn-inspect" class="bg-zinc-800 text-zinc-300 px-3 py-1.5 rounded hover:bg-zinc-700 transition border border-zinc-700">
+          npx ubuntu-services inspect appointment.keshavsoft.com
+        </button>
+      </div>
+
+      <!-- Terminal Window -->
+      <div class="w-full bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl font-mono text-xs text-zinc-200">
+        <!-- Terminal Header -->
+        <div class="bg-zinc-900 px-4 py-2.5 border-b border-zinc-800 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-red-500/80 inline-block"></span>
+            <span class="w-3 h-3 rounded-full bg-amber-500/80 inline-block"></span>
+            <span class="w-3 h-3 rounded-full bg-emerald-500/80 inline-block"></span>
+            <span class="text-zinc-500 text-[11px] ml-2">root@server6358:~#</span>
+          </div>
+          <span id="terminal-cmd-display" class="text-emerald-400 text-[11px]">npx ubuntu-services</span>
+        </div>
+
+        <!-- Terminal Output -->
+        <pre id="terminal-output" class="p-4 sm:p-6 overflow-x-auto text-[11px] leading-relaxed text-zinc-300 max-h-[460px]">Loading simulator...</pre>
+      </div>
+    </section>
+
+    <!-- CLI Reference Section -->
+    <section class="w-full text-left bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6 sm:p-8 mb-12 shadow-md">
+      <div class="flex items-center gap-2 text-emerald-400 font-semibold text-xs tracking-wider uppercase mb-3">
+        <i class="bi bi-command"></i>
+        <span>Command Reference</span>
+      </div>
+      <h2 class="text-2xl font-bold text-white mb-4">CLI Commands &amp; Flags</h2>
+
+      <div class="overflow-x-auto text-xs font-mono">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="border-b border-zinc-800 text-zinc-400">
+              <th class="py-2.5 px-3">Command</th>
+              <th class="py-2.5 px-3">Purpose</th>
+              <th class="py-2.5 px-3">Example</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-zinc-800/60 text-zinc-300">
+            <tr>
+              <td class="py-2.5 px-3 text-emerald-400 font-bold">npx ubuntu-services</td>
+              <td class="py-2.5 px-3">Prints overview table verifying physical directories on disk</td>
+              <td class="py-2.5 px-3 text-zinc-400">npx usv</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 text-amber-400 font-bold">broken / doctor / missing</td>
+              <td class="py-2.5 px-3">Isolates broken units, missing folders, or crash loops</td>
+              <td class="py-2.5 px-3 text-zinc-400">npx ubuntu-services broken</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 text-cyan-400 font-bold">dirs</td>
+              <td class="py-2.5 px-3">Discovers all systemd service directories on Ubuntu</td>
+              <td class="py-2.5 px-3 text-zinc-400">npx ubuntu-services dirs</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 text-blue-400 font-bold">inspect &lt;name&gt;</td>
+              <td class="py-2.5 px-3">Deeply inspects raw unit sections, health, and port</td>
+              <td class="py-2.5 px-3 text-zinc-400">npx ubuntu-services inspect appointment.keshavsoft.com</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 text-zinc-400 font-bold">--json</td>
+              <td class="py-2.5 px-3">Outputs machine-readable JSON for monitoring or CI/CD</td>
+              <td class="py-2.5 px-3 text-zinc-400">npx ubuntu-services --json</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-zinc-800 bg-zinc-950 py-8 text-center text-xs text-zinc-500 font-mono">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div>
+        <span>ISC License &copy; 2026 </span>
+        <a href="https://github.com/keshavsoft" class="text-zinc-400 hover:text-zinc-200 underline">KeshavSoft</a>.
+        <span> Built for production Ubuntu VPS environments.</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <a href="https://github.com/keshavsoft/ubuntu-services" class="hover:text-emerald-400 transition">GitHub</a>
+        <a href="https://github.com/keshavsoft/ubuntu-service-port" class="hover:text-emerald-400 transition">ubuntu-service-port</a>
+        <a href="https://github.com/keshavsoft/ubuntu-service-cli" class="hover:text-emerald-400 transition">ubuntu-service-cli</a>
+        <a href="https://github.com/keshavsoft/caddy-cli" class="hover:text-emerald-400 transition">caddy-cli</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Simulator Script -->
+  <script>
+    const SIMULATED_DATA = {
+      overview: `Ubuntu Systemd Services (6 services in /etc/systemd/system):
+
+┌─────────┬──────────────────────────────────────┬──────────────────────────────┬─────────────────┬─────────────────────┬────────┬──────────────────────────────┬─────────────────────────────────────────┐
+│ (index) │ Service                              │ Domain                       │ Status          │ Physical Folder     │ Port   │ GitHub Repo                  │ Working Directory                       │
+├─────────┼──────────────────────────────────────┼──────────────────────────────┼─────────────────┼─────────────────────┼────────┼──────────────────────────────┼─────────────────────────────────────────┤
+│ 0       │ 'call.keshavsoft.com.service'        │ 'call.keshavsoft.com'        │ '🟢 active'     │ '✅ Exists'         │ '3001' │ 'appointment-notifier-v1'    │ '/root/KeshavSoft/appointment-notifier' │
+│ 1       │ 'appointment.keshavsoft.com.service' │ 'appointment.keshavsoft.com' │ '🚨 200/CHDIR'  │ '❌ MISSING FOLDER' │ '3000' │ '-'                          │ '/root/KeshavSoft/appointment-notifier' │
+│ 2       │ 'lab14.keshavsoft.com.service'       │ 'lab14.keshavsoft.com'       │ '🟢 active'     │ '✅ Exists'         │ '9012' │ 'labManV1'                   │ '/root/KeshavSoft/lab14.keshavsoft.com' │
+│ 3       │ 'mani3.keshavsoft.com.service'       │ 'mani3.keshavsoft.com'       │ '🟢 active'     │ '✅ Exists'         │ '3025' │ 'quotationV5'                │ '/root/KeshavSoft/mani3.keshavsoft.com' │
+│ 4       │ 'rk2.keshavsoft.com.service'         │ 'rk2.keshavsoft.com'         │ '🟢 active'     │ '✅ Exists'         │ '9010' │ 'WhatsAppOrigV6'             │ '/root/KeshavSoft/rk2.keshavsoft.com'   │
+│ 5       │ 'keshavsoft.com.service'             │ 'keshavsoft.com'             │ '🟢 active'     │ '✅ Exists'         │ '9328' │ 'InternsBEV8'                │ '/root/KeshavSoft/keshavsoft.com'       │
+└─────────┴──────────────────────────────────────┴──────────────────────────────┴─────────────────┴─────────────────────┴────────┴──────────────────────────────┴─────────────────────────────────────────┘
+⚠️  Alert: 1 service(s) have missing physical folders or crash loops!
+    Run 'npx ubuntu-services broken' for diagnostic details.`,
+
+      broken: `======================================================================
+🩺 Ubuntu Systemd Health Audit: Broken Services & Missing Folders
+======================================================================
+
+⚠️  Found 1 service(s) with physical folder issues or crash loops:
+
+[1] Service: appointment.keshavsoft.com.service
+    Domain            : appointment.keshavsoft.com
+    Unit File         : /etc/systemd/system/appointment.keshavsoft.com.service
+    Service Status    : 🚨 crash_loop_missing_dir
+    Error Details     : status=200/CHDIR (WorkingDirectory does not exist on disk)
+    Working Directory : /root/KeshavSoft/appointment-notifier
+    Folder Health     : ❌ MISSING FOLDER
+    Assigned Port     : 3000
+
+======================================================================
+Action Required: Either restore the missing folder, or update the service unit.
+======================================================================`,
+
+      dirs: `Discovered Ubuntu Systemd Service Directories:
+
+┌─────────┬──────────────────────────┬─────────┬───────────────┐
+│ (index) │ Directory                │ Exists  │ Units Found   │
+├─────────┼──────────────────────────┼─────────┼───────────────┤
+│ 0       │ '/etc/systemd/system'    │ '✅ Yes'│ 18            │
+│ 1       │ '/run/systemd/system'    │ '✅ Yes'│ 2             │
+│ 2       │ '/usr/lib/systemd/system'│ '✅ Yes'│ 245           │
+│ 3       │ '/lib/systemd/system'    │ '✅ Yes'│ 245           │
+└─────────┴──────────────────────────┴─────────┴───────────────┘`,
+
+      inspect: `======================================================================
+🔍 Service Details: appointment.keshavsoft.com.service
+======================================================================
+
+Domain            : appointment.keshavsoft.com
+Unit File         : /etc/systemd/system/appointment.keshavsoft.com.service
+Service Status    : 🚨 crash_loop_missing_dir
+Error Details     : status=200/CHDIR (WorkingDirectory does not exist on disk)
+Working Directory : /root/KeshavSoft/appointment-notifier
+Folder Health     : ❌ MISSING FOLDER
+Port              : 3000 (Environment directive)
+GitHub Repo       : -
+ExecStart         : /root/.nvm/versions/node/v24.13.0/bin/node /root/KeshavSoft/appointment-notifier/app.js
+User              : root
+Restart Policy    : on-failure (5s)
+
+Raw Unit Sections:
+{
+  "Unit": {
+    "Description": "Appointment Notifier Node Service",
+    "After": "network.target"
+  },
+  "Service": {
+    "Type": "simple",
+    "User": "root",
+    "WorkingDirectory": "/root/KeshavSoft/appointment-notifier",
+    "Environment": "PORT=3000",
+    "ExecStart": "/root/.nvm/versions/node/v24.13.0/bin/node /root/KeshavSoft/appointment-notifier/app.js",
+    "Restart": "on-failure",
+    "RestartSec": "5"
+  },
+  "Install": {
+    "WantedBy": "multi-user.target"
+  }
+}`
+    };
+
+    function runSimulator(mode) {
+      const output = document.getElementById("terminal-output");
+      const cmdDisplay = document.getElementById("terminal-cmd-display");
+
+      // Update active button styles
+      const btnMap = {
+        overview: "btn-overview",
+        broken: "btn-broken",
+        dirs: "btn-dirs",
+        inspect: "btn-inspect"
+      };
+
+      const cmdMap = {
+        overview: "npx ubuntu-services",
+        broken: "npx ubuntu-services broken",
+        dirs: "npx ubuntu-services dirs",
+        inspect: "npx ubuntu-services inspect appointment.keshavsoft.com"
+      };
+
+      Object.values(btnMap).forEach(id => {
+        const btn = document.getElementById(id);
+        btn.className = "bg-zinc-800 text-zinc-300 px-3 py-1.5 rounded hover:bg-zinc-700 transition border border-zinc-700";
+      });
+
+      const activeBtn = document.getElementById(btnMap[mode]);
+      if (activeBtn) {
+        activeBtn.className = "bg-emerald-600 text-zinc-950 font-bold px-3 py-1.5 rounded hover:bg-emerald-500 transition shadow";
+      }
+
+      cmdDisplay.textContent = cmdMap[mode] || "npx ubuntu-services";
+      output.textContent = SIMULATED_DATA[mode] || "Command executed.";
+    }
+
+    function copySnippet(text, btn) {
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.innerHTML;
+        btn.innerHTML = `<i class="bi bi-check2 text-emerald-400"></i><span class="text-emerald-400">Copied</span>`;
+        setTimeout(() => { btn.innerHTML = orig; }, 2000);
+      });
+    }
+
+    // Init with overview mode
+    runSimulator('overview');
+  </script>
+</body>
+</html>
