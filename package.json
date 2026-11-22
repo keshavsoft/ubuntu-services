@@ -1,0 +1,48 @@
+{
+  "name": "ubuntu-services",
+  "version": "1.0.0",
+  "description": "Discover, list, and health-check all registered Ubuntu systemd services, verifying physical working directories on disk.",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./v1": "./src/v1/index.js"
+  },
+  "bin": {
+    "ubuntu-services": "bin/index.js",
+    "usv": "bin/index.js"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "scripts": {
+    "start": "node bin/index.js",
+    "cli": "node bin/index.js",
+    "test": "node --test"
+  },
+  "keywords": [
+    "ubuntu",
+    "systemd",
+    "services",
+    "health-check",
+    "working-directory",
+    "doctor",
+    "vps",
+    "keshavsoft",
+    "daemon"
+  ],
+  "author": "KeshavSoft",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/keshavsoft/ubuntu-services.git"
+  },
+  "bugs": {
+    "url": "https://github.com/keshavsoft/ubuntu-services/issues"
+  },
+  "homepage": "https://keshavsoft.github.io/ubuntu-services/",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

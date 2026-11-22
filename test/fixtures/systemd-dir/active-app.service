@@ -1,0 +1,11 @@
+[Unit]
+Description=Active App Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=./test/fixtures/sample-app
+EnvironmentFile=./test/fixtures/sample-app/.env
+
+ExecStart=/usr/bin/node app.js
